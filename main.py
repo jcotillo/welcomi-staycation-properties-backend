@@ -80,6 +80,7 @@ rag_retrieval_tool = Tool.from_retrieval(
         ),
     )
 )
+
 @functions_framework.http
 def run_inference(request):
     request_json = request.get_json(silent=True)
@@ -99,10 +100,4 @@ def run_inference(request):
         prompt_response = "No prompt provided."
 
     return json.dumps({"response_text": prompt_response})
-
-
-gcloud functions deploy function-1 \
-  --runtime python312 \
-  --trigger-http \
-  --set-env-vars PROJECT_ID="customerserviceapp-432018",RAG_DISPLAY_NAME="airbnbtest_corpus",LANDING_PAGE_PATH="gs://landingpad/WelcomePackage.pdf"
 
