@@ -46,7 +46,7 @@ def retrieve_tool():
             source=rag.VertexRagStore(
                 rag_resources=[
                     rag.RagResource(
-                        rag_corpus="projects/customerserviceapp-432018/locations/us-central1/ragCorpora/8142508126285856768",
+                        rag_corpus=os.getenv('RAG_ID'),
                     )
                 ],
                 similarity_top_k=3,  # Optional
@@ -65,16 +65,18 @@ def run_inference(request):
 
     if request_json and "prompt" in request_json:
         prompt = request_json["prompt"]
-        history = request_json["history"]
+        if "history" in request_json:
+            history = request_json["history"]
+        else:
+            history = []
         logger.log(f"Received request for prompt: {prompt}")
         vertexai.init(project=PROJECT_ID, location=LOCATION)
-        # model = GenerativeModel(model_name="gemini-1.5-flash-001")
         rag_retrieval_tool = retrieve_tool()
         model = GenerativeModel(model_name="gemini-1.5-flash-001", tools=[rag_retrieval_tool])
 
         # Generate response
-        response = model.start_chat(prompt, history)
-
+        model.start_chat(history=history)
+        response = model.send_message(prompt)
         prompt_response = response.text
     else:
         prompt_response = "No prompt provided."
