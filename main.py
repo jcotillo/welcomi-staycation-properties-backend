@@ -4,7 +4,7 @@ import json
 from google.cloud import logging
 import functions_framework
 import vertexai
-from vertexai.preview.generative_models import GenerativeModel, Tool
+from vertexai.preview.generative_models import GenerativeModel, Tool, Content, Part
 from vertexai.preview import rag
 from vertexai.preview import generative_models
 from dotenv import load_dotenv
@@ -66,7 +66,12 @@ def run_inference(request):
     if request_json and "prompt" in request_json:
         prompt = request_json["prompt"]
         if "history" in request_json:
-            history = request_json["history"]
+            history_parsed = request_json["history"]
+            contents = []
+            for history in history_parsed:
+                content = Content(role=history["role"], parts=[Part.from_text(history["message"])])
+                contents.append(content)
+            history = contents
         else:
             history = []
         logger.log(f"Received request for prompt: {prompt}")
@@ -75,8 +80,8 @@ def run_inference(request):
         model = GenerativeModel(model_name="gemini-1.5-flash-001", tools=[rag_retrieval_tool])
 
         # Generate response
-        model.start_chat(history=history)
-        response = model.send_message(prompt)
+        chat = model.start_chat(history=history)
+        response = chat.send_message(prompt)
         prompt_response = response.text
     else:
         prompt_response = "No prompt provided."
